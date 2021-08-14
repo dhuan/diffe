@@ -10,9 +10,26 @@ diffe () {
 
     local MODE="$1"
 
-    if [[ "$MODE" != "log" ]] && [[ "$MODE" != "branch" ]]
+    local DIFF_REVISION=""
+
+    if _diffe_is_argument_valid_revision_tuple "$@"
     then
-        echo "branch or log?"
+        DIFF_REVISION="$@"
+    fi
+
+    if [[ "$MODE" != "log" ]] && [[ "$MODE" != "branch" ]] && [[ -z "$DIFF_REVISION" ]]
+    then
+        echo "Usage:"
+        echo ""
+        echo "$ diffe log"
+        echo "Pick two revisions from the git log."
+        echo ""
+        echo "$ diffe branch"
+        echo "Pick two branches."
+        echo ""
+        echo "$ diffe rev1 rev2"
+        echo "Pass as parameters the two revisions you want to compare against."
+        echo ""
 
         return
     fi
@@ -20,6 +37,16 @@ diffe () {
     if [[ -z "$DIFFE_PROGRAM" ]]
     then
         local DIFFE_PROGRAM="vim -d % %"
+    fi
+
+    if [[ ! -z "$DIFF_REVISION" ]]
+    then
+        local REV_A=$(echo "$DIFF_REVISION" | cut -d " " -f 1)
+        local REV_B=$(echo "$DIFF_REVISION" | cut -d " " -f 2)
+
+        _diffe_run "$REV_A" "$REV_B" "$DIFFE_PROGRAM"
+
+        return
     fi
 
 
@@ -32,25 +59,33 @@ diffe () {
         return
     fi
 
-    REV_A=$(echo "$REVS" | cut -d "," -f 1)
-    REV_B=$(echo "$REVS" | cut -d "," -f 2)
+    local REV_A=$(echo "$REVS" | cut -d "," -f 1)
+    local REV_B=$(echo "$REVS" | cut -d "," -f 2)
+
+    _diffe_run "$REV_A" "$REV_B" "$DIFFE_PROGRAM"
+}
+
+_diffe_run () {
+    local ARG_REV_A="$1"
+    local ARG_REV_B="$2"
+    local ARG_DIFFE_PROGRAM="$3"
 
     local FILE_DIFF_A=$(mktemp)
     local FILE_DIFF_B=$(mktemp)
 
     while true;
     do
-        local CHOSEN_FILE=$(_git_get_files_changed_from_two_revisions "$REV_A" "$REV_B" | fzf | sed -E 's/^.\s{1,}//g')
+        local CHOSEN_FILE=$(_git_get_files_changed_from_two_revisions "$ARG_REV_A" "$ARG_REV_B" | fzf | sed -E 's/^.\s{1,}//g')
 
         if [ -z "$CHOSEN_FILE" ]
         then
             break
         fi
 
-        git show "$REV_A":"$CHOSEN_FILE" > "$FILE_DIFF_A"
-        git show "$REV_B":"$CHOSEN_FILE" > "$FILE_DIFF_B"
+        git show "$ARG_REV_A":"$CHOSEN_FILE" > "$FILE_DIFF_A"
+        git show "$ARG_REV_B":"$CHOSEN_FILE" > "$FILE_DIFF_B"
 
-        local DIFFE_PROGRAM_MODIFIED="$DIFFE_PROGRAM"
+        local DIFFE_PROGRAM_MODIFIED="$ARG_DIFFE_PROGRAM"
         DIFFE_PROGRAM_MODIFIED=${DIFFE_PROGRAM_MODIFIED/\%/$FILE_DIFF_A}
         DIFFE_PROGRAM_MODIFIED=${DIFFE_PROGRAM_MODIFIED/\%/$FILE_DIFF_B}
 
@@ -122,4 +157,38 @@ _git_get_files_changed_from_two_revisions() {
 
 _has_comma() {
     grep -b -o "," <<< "$1" > /dev/null
+}
+
+_has_space() {
+    grep -b -o " " <<< "$1" > /dev/null
+}
+
+_diffe_is_valid_revision () {
+    local REV="$1"
+
+    git log "$REV" &> /dev/null
+}
+
+_diffe_is_argument_valid_revision_tuple () {
+    local ARG_REVISION_TUPLE="$@"
+
+    if ! _has_space "$ARG_REVISION_TUPLE"
+    then
+        return 1
+    fi
+
+    local REV_A=$(echo "$ARG_REVISION_TUPLE" | cut -d ' ' -f 1)
+    local REV_B=$(echo "$ARG_REVISION_TUPLE" | cut -d ' ' -f 2)
+
+    if ! _diffe_is_valid_revision "$REV_A"
+    then
+        return 1
+    fi
+
+    if ! _diffe_is_valid_revision "$REV_B"
+    then
+        return 1
+    fi
+
+    return 0
 }
