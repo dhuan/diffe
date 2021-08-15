@@ -52,7 +52,7 @@ Diffe depends on GNU's sed. The sed program that comes with macOS is the BSD ver
 brew install gnu-sed
 ```
 
-Then, when running diffe make sure to use the `DIFFE_PROGRAM_SED` environment variable so that diffe knows to use the right sed program.
+Then, when running diffe, make sure to use the `DIFFE_PROGRAM_SED` environment variable so that diffe knows to use the right sed program.
 
 ```
 DIFFE_PROGRAM_SED="gsed" diffe log
