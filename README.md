@@ -36,6 +36,12 @@ Defines the code editor command that will open up two files for comparison. If y
 DIFFE_PROGRAM="meld % %"
 ```
 
+### $DIFFE_PROGRAM_SED
+
+Default value: `sed`
+
+If your `sed` program is the GNU version, there's no need to define this variable. If however you're in some BSD-variant distribution, you will need to define this variable referencing the executable name to GNU's sed.
+
 ## Installation
 
 Just source the shell script:
@@ -44,4 +50,17 @@ Just source the shell script:
 $ source <Path to where you cloned diffe>/diffe.sh
 ```
 
+## Using diffe on macOS
+
+Diffe depends on GNU's sed. The sed program that comes with macOS is the BSD version, which will result in problems while using Diffe. You can easily solve this problem installing gnu-sed on your Mac:
+
+```
+brew install gnu-sed
+```
+
+Then, when running diffe, make sure to use the `DIFFE_PROGRAM_SED` environment variable so that diffe knows to use the right sed program.
+
+```
+DIFFE_PROGRAM_SED="gsed" diffe log
+```
 
