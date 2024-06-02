@@ -17,11 +17,6 @@ diffe () {
         DIFF_REVISION="$@"
     fi
 
-    if [[ -z "$DIFFE_PROGRAM_SED" ]]
-    then
-        local DIFFE_PROGRAM_SED="sed"
-    fi
-
     if [[ "$MODE" != "log" ]] && [[ "$MODE" != "branch" ]] && [[ -z "$DIFF_REVISION" ]]
     then
         echo "Usage:"
@@ -80,7 +75,7 @@ _diffe_run () {
 
     while true;
     do
-        local CHOSEN_FILE=$(_git_get_files_changed_from_two_revisions "$ARG_REV_A" "$ARG_REV_B" | fzf | "$DIFFE_PROGRAM_SED" -E 's/^.\s{1,}//g')
+        local CHOSEN_FILE=$(_git_get_files_changed_from_two_revisions "$ARG_REV_A" "$ARG_REV_B" | fzf | awk '{print $2}')
 
         if [ -z "$CHOSEN_FILE" ]
         then
@@ -99,15 +94,11 @@ _diffe_run () {
 }
 
 _git_branches_stripped() {
-    git branch --all | "$DIFFE_PROGRAM_SED" 's/^\ \ //' | "$DIFFE_PROGRAM_SED" 's/^\*\ //'
+    git branch --all | awk '{sub(/^\*/, " "); print}' | awk '{print $1}'
 }
 
 _current_git_branch () {
     git branch | grep \* | cut -d ' ' -f2
-}
-
-_git_main_remote_branch () {
-    git symbolic-ref refs/remotes/origin/HEAD | "$DIFFE_PROGRAM_SED" 's@^refs/remotes/origin/@@'
 }
 
 _git_verify_repo () {
@@ -126,7 +117,7 @@ _git_diffe_get_rev() {
     if [ "$ARG_MODE" = "branch" ]
     then
         local FZF_RESULT=$(_git_branches_stripped | fzf --multi=2)
-        local BRANCH_CHOSEN=$(echo $FZF_RESULT | "$DIFFE_PROGRAM_SED" 's/\s/,/g')
+        local BRANCH_CHOSEN=$(echo $FZF_RESULT | awk '{sub(" ", ","); print}')
 
         REVS="$BRANCH_CHOSEN"
     fi
@@ -134,7 +125,7 @@ _git_diffe_get_rev() {
     if [ "$ARG_MODE" = "log" ]
     then
         local FZF_RESULT=$(git log --format="%h %cs %aN %s" | fzf --multi=2 --layout=reverse | _git_diffe_get_commit_hash_from_formatted_log)
-        local LOG_CHOSEN=$(echo $FZF_RESULT | "$DIFFE_PROGRAM_SED" 's/\s/,/g')
+        local LOG_CHOSEN=$(echo $FZF_RESULT | awk '{sub(" ", ","); print}')
 
         REVS="$LOG_CHOSEN"
     fi
@@ -150,7 +141,7 @@ _git_diffe_get_rev() {
 }
 
 _git_diffe_get_commit_hash_from_formatted_log () {
-    "$DIFFE_PROGRAM_SED" -E 's/\s.*$//g'
+    awk '{print $1}'
 }
 
 _git_get_files_changed_from_two_revisions() {
