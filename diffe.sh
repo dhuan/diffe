@@ -75,7 +75,10 @@ _diffe_run () {
 
     while true;
     do
-        local CHOSEN_FILE=$(_git_get_files_changed_from_two_revisions "$ARG_REV_A" "$ARG_REV_B" | fzf | awk '{print $2}')
+        local CHOSEN_FILE=$(_git_get_files_changed_from_two_revisions "$ARG_REV_A" "$ARG_REV_B" \
+            | awk '{print $2}' \
+            | fzf --preview 'git diff --color=always '"${ARG_REV_A}"'...'"${ARG_REV_B}"' {}' \
+        )
 
         if [ -z "$CHOSEN_FILE" ]
         then
