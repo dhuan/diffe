@@ -72,18 +72,24 @@ _diffe_run () {
 
     local FILE_DIFF_A=$(mktemp)
     local FILE_DIFF_B=$(mktemp)
+    local INDEX=1
 
     while true;
     do
         local CHOSEN_FILE=$(_git_get_files_changed_from_two_revisions "$ARG_REV_A" "$ARG_REV_B" \
             | awk '{print $2}' \
             | fzf --preview 'git diff --color=always '"${ARG_REV_A}"'...'"${ARG_REV_B}"' {}' \
+                --sync --bind "start:pos(${INDEX})"
         )
 
         if [ -z "$CHOSEN_FILE" ]
         then
             break
         fi
+
+        INDEX=$(_git_get_files_changed_from_two_revisions "$ARG_REV_A" "$ARG_REV_B" \
+            | awk '{print $2}' \
+            | _find_line "${CHOSEN_FILE}")
 
         git show "$ARG_REV_A":"$CHOSEN_FILE" > "$FILE_DIFF_A"
         git show "$ARG_REV_B":"$CHOSEN_FILE" > "$FILE_DIFF_B"
@@ -190,4 +196,21 @@ _diffe_is_argument_valid_revision_tuple () {
     fi
 
     return 0
+}
+
+_find_line () {
+    X="0"
+    while read -r LINE
+    do
+        X=$((X+1))
+
+        if [ "${LINE}" == "${1}" ]
+        then
+            printf "%s" "${X}"
+
+            return
+        fi
+    done
+
+    printf "%s" "0"
 }
