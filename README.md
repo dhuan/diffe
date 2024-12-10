@@ -24,6 +24,12 @@ If you prefer to just type the revisions or branches you want to compare instead
 $ diffe branch_one branch_two
 ```
 
+You may also provide a single Git revision, and then *diffe* will compare that revision to the previous one:
+
+```
+$ diffe some_revision
+```
+
 ## Customizing/Options
 
 ### $DIFFE_PROGRAM

@@ -17,6 +17,11 @@ diffe () {
         DIFF_REVISION="$@"
     fi
 
+    if _diffe_is_valid_revision "${@}"
+    then
+        DIFF_REVISION="$(printf "%s %s" "${@}^" "${@}")"
+    fi
+
     if [[ "$MODE" != "log" ]] && [[ "$MODE" != "branch" ]] && [[ -z "$DIFF_REVISION" ]]
     then
         echo "Usage:"
@@ -169,7 +174,7 @@ _has_space() {
 }
 
 _diffe_is_valid_revision () {
-    local REV="$1"
+    local REV="${@}"
 
     git log "$REV" &> /dev/null
 }
