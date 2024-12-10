@@ -78,7 +78,7 @@ _diffe_run () {
     do
         local CHOSEN_FILE=$(_git_get_files_changed_from_two_revisions "$ARG_REV_A" "$ARG_REV_B" \
             | awk '{print $2}' \
-            | fzf --preview 'git diff --color=always '"${ARG_REV_A}"'...'"${ARG_REV_B}"' {}' \
+            | fzf --preview 'git diff --color=always '"${ARG_REV_A}"'...'"${ARG_REV_B}"' -- {}' \
                 --sync --bind "start:pos(${INDEX})"
         )
 
