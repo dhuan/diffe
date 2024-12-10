@@ -204,18 +204,5 @@ _diffe_is_argument_valid_revision_tuple () {
 }
 
 _find_line () {
-    X="0"
-    while read -r LINE
-    do
-        X=$((X+1))
-
-        if [ "${LINE}" = "${1}" ]
-        then
-            printf "%s" "${X}"
-
-            return
-        fi
-    done
-
-    printf "%s" "0"
+    awk 'BEGIN {X=0} $0 == "'"${1}"'" {X=NR} END {print X}'
 }
