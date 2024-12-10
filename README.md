@@ -49,3 +49,13 @@ Just source the shell script:
 ```
 $ source <Path to where you cloned diffe>/diffe.sh
 ```
+
+## Integrate it with tig
+
+[tig is a text-mode interface for git.](https://github.com/jonas/tig)
+
+```sh
+# ~/.tigrc:
+
+bind generic ; !sh -c '. ~/.bashrc && diffe %(commit)'
+```
