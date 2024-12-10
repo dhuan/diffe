@@ -209,7 +209,7 @@ _find_line () {
     do
         X=$((X+1))
 
-        if [ "${LINE}" == "${1}" ]
+        if [ "${LINE}" = "${1}" ]
         then
             printf "%s" "${X}"
 
