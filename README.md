@@ -4,21 +4,7 @@ Visualize diffs between git revisions, easily.
 
 ## Usage
 
-CD into a git repository folder, and then:
-
-```
-$ diffe branch
-```
-
-You will then be prompted to choose two branches you want to compare against and visualize the diff for.
-
-Or if you want to diff against two commits:
-
-```
-$ diffe log
-```
-
-If you prefer to just type the revisions or branches you want to compare instead of being prompted to select:
+Pass as parameters two Git revisions:
 
 ```
 $ diffe branch_one branch_two

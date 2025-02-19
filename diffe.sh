@@ -22,19 +22,11 @@ diffe () {
         DIFF_REVISION="$(printf "%s %s" "${@}^" "${@}")"
     fi
 
-    if [[ "$MODE" != "log" ]] && [[ "$MODE" != "branch" ]] && [[ -z "$DIFF_REVISION" ]]
+    if [ -z "$DIFF_REVISION" ]
     then
         echo "Usage:"
         echo ""
-        echo "$ diffe log"
-        echo "Pick two revisions from the git log."
-        echo ""
-        echo "$ diffe branch"
-        echo "Pick two branches."
-        echo ""
         echo "$ diffe rev1 rev2"
-        echo "Pass as parameters the two revisions you want to compare against."
-        echo ""
 
         return
     fi
@@ -53,7 +45,6 @@ diffe () {
 
         return
     fi
-
 
     local REVS=$(_git_diffe_get_rev "$MODE")
 
@@ -107,14 +98,6 @@ _diffe_run () {
     done
 }
 
-_git_branches_stripped() {
-    git branch --all | awk '{sub(/^\*/, " "); print}' | awk '{print $1}'
-}
-
-_current_git_branch () {
-    git branch | grep \* | cut -d ' ' -f2
-}
-
 _git_verify_repo () {
     if [ -d ".git" ]
     then
@@ -128,23 +111,7 @@ _git_diffe_get_rev() {
     local ARG_MODE="$1"
     local REVS
 
-    if [ "$ARG_MODE" = "branch" ]
-    then
-        local FZF_RESULT=$(_git_branches_stripped | fzf --multi=2)
-        local BRANCH_CHOSEN=$(echo $FZF_RESULT | awk '{sub(" ", ","); print}')
-
-        REVS="$BRANCH_CHOSEN"
-    fi
-
-    if [ "$ARG_MODE" = "log" ]
-    then
-        local FZF_RESULT=$(git log --format="%h %cs %aN %s" | fzf --multi=2 --layout=reverse | _git_diffe_get_commit_hash_from_formatted_log)
-        local LOG_CHOSEN=$(echo $FZF_RESULT | awk '{sub(" ", ","); print}')
-
-        REVS="$LOG_CHOSEN"
-    fi
-
-    if ! _has_comma "$REVS";
+    if ! printf "%s" "$REVS" | _contains ","
     then
         echo "$_DIFFE_GET_REV_ERROR_DID_NOT_CHOOSE_MULTIPLE"
 
@@ -154,10 +121,6 @@ _git_diffe_get_rev() {
     echo "$REVS"
 }
 
-_git_diffe_get_commit_hash_from_formatted_log () {
-    awk '{print $1}'
-}
-
 _git_get_files_changed_from_two_revisions() {
     ARG_REV_A="$1"
     ARG_REV_B="$2"
@@ -165,12 +128,8 @@ _git_get_files_changed_from_two_revisions() {
     git diff $ARG_REV_A...$ARG_REV_B --name-status
 }
 
-_has_comma() {
-    grep -b -o "," <<< "$1" > /dev/null
-}
-
-_has_space() {
-    grep -b -o " " <<< "$1" > /dev/null
+_contains() {
+    grep -oqF "${1}" 2> /dev/null
 }
 
 _diffe_is_valid_revision () {
@@ -182,7 +141,7 @@ _diffe_is_valid_revision () {
 _diffe_is_argument_valid_revision_tuple () {
     local ARG_REVISION_TUPLE="$@"
 
-    if ! _has_space "$ARG_REVISION_TUPLE"
+    if ! printf "%s" "$ARG_REVISION_TUPLE" | _contains ' '
     then
         return 1
     fi
