@@ -9,8 +9,19 @@ diffe () {
     fi
 
     local MODE="$1"
-
     local DIFF_REVISION=""
+
+    if [[ -z "$DIFFE_PROGRAM" ]]
+    then
+        local DIFFE_PROGRAM="vim -d % %"
+    fi
+
+    if [ -z "$(printf "%s" "${@}")" ]
+    then
+        WIP_MODE="true" _diffe_run "NONE" "NONE" "$DIFFE_PROGRAM"
+
+        return
+    fi
 
     if _diffe_is_argument_valid_revision_tuple "$@"
     then
@@ -29,11 +40,6 @@ diffe () {
         echo "$ diffe rev1 rev2"
 
         return
-    fi
-
-    if [[ -z "$DIFFE_PROGRAM" ]]
-    then
-        local DIFFE_PROGRAM="vim -d % %"
     fi
 
     if [[ ! -z "$DIFF_REVISION" ]]
@@ -72,9 +78,21 @@ _diffe_run () {
 
     while true;
     do
-        local CHOSEN_FILE=$(_git_get_files_changed_from_two_revisions "$ARG_REV_A" "$ARG_REV_B" \
-            | awk '{print $2}' \
-            | fzf --preview 'git diff --color=always '"${ARG_REV_A}"'...'"${ARG_REV_B}"' -- {}' \
+        local CHOSEN_FILE=""
+        local FILES_LIST=""
+        local PREVIEW_ARG=""
+
+        if [ "${WIP_MODE}" = "true" ]
+        then
+            FILES_LIST="$(_git_get_files_changed_wip)"
+            PREVIEW_ARG='git diff --color=always {}'
+        else
+            FILES_LIST="$(_git_get_files_changed_from_two_revisions "$ARG_REV_A" "$ARG_REV_B" | awk '{print $2}')"
+            PREVIEW_ARG='git diff --color=always '"${ARG_REV_A}"'...'"${ARG_REV_B}"' -- {}'
+        fi
+
+        CHOSEN_FILE=$(printf "%s" "${FILES_LIST}" \
+            | fzf --preview "${PREVIEW_ARG}"  \
                 --sync --bind "start:pos(${INDEX})"
         )
 
@@ -83,12 +101,17 @@ _diffe_run () {
             break
         fi
 
-        INDEX=$(_git_get_files_changed_from_two_revisions "$ARG_REV_A" "$ARG_REV_B" \
-            | awk '{print $2}' \
+        INDEX=$(printf "%s" "${FILES_LIST}" \
             | _find_line "${CHOSEN_FILE}")
 
-        git show "$ARG_REV_A":"$CHOSEN_FILE" > "$FILE_DIFF_A"
-        git show "$ARG_REV_B":"$CHOSEN_FILE" > "$FILE_DIFF_B"
+        if [ "${WIP_MODE}" = "true" ]
+        then
+            git show "HEAD":"$CHOSEN_FILE" > "$FILE_DIFF_A"
+            cat "$CHOSEN_FILE" > "$FILE_DIFF_B"
+        else
+            git show "$ARG_REV_A":"$CHOSEN_FILE" > "$FILE_DIFF_A"
+            git show "$ARG_REV_B":"$CHOSEN_FILE" > "$FILE_DIFF_B"
+        fi
 
         local DIFFE_PROGRAM_MODIFIED="$ARG_DIFFE_PROGRAM"
         DIFFE_PROGRAM_MODIFIED=${DIFFE_PROGRAM_MODIFIED/\%/$FILE_DIFF_A}
@@ -126,6 +149,10 @@ _git_get_files_changed_from_two_revisions() {
     ARG_REV_B="$2"
 
     git diff $ARG_REV_A...$ARG_REV_B --name-status
+}
+
+_git_get_files_changed_wip () {
+    git status --short | awk '{print $2}'
 }
 
 _contains() {

@@ -16,6 +16,8 @@ You may also provide a single Git revision, and then *diffe* will compare that r
 $ diffe some_revision
 ```
 
+Run it with no parameters and your "work in progress" changes will be used for comparison.
+
 ## Customizing/Options
 
 ### $DIFFE_PROGRAM
