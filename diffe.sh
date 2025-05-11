@@ -85,7 +85,7 @@ _diffe_run () {
         if [ "${WIP_MODE}" = "true" ]
         then
             FILES_LIST="$(_git_get_files_changed_wip)"
-            PREVIEW_ARG='git diff --color=always HEAD {}'
+            PREVIEW_ARG='git show HEAD:{} > /dev/null 2>&1 && git diff --color=always HEAD {} || cat {}'
         else
             FILES_LIST="$(_git_get_files_changed_from_two_revisions "$ARG_REV_A" "$ARG_REV_B" | awk '{print $2}')"
             PREVIEW_ARG='git diff --color=always '"${ARG_REV_A}"'...'"${ARG_REV_B}"' -- {}'
@@ -152,7 +152,7 @@ _git_get_files_changed_from_two_revisions() {
 }
 
 _git_get_files_changed_wip () {
-    git status --short | awk '{print $2}'
+    git status --short --u=all | awk '{print $2}'
 }
 
 _contains() {
