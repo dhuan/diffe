@@ -8,10 +8,9 @@ diffe () {
         return
     fi
 
-    local MODE="$1"
     local DIFF_REVISION=""
 
-    if [[ -z "$DIFFE_PROGRAM" ]]
+    if [ -z "$DIFFE_PROGRAM" ]
     then
         local DIFFE_PROGRAM="vim -d % %"
     fi
@@ -42,7 +41,7 @@ diffe () {
         return
     fi
 
-    if [[ ! -z "$DIFF_REVISION" ]]
+    if [ -n "$DIFF_REVISION" ]
     then
         local REV_A=$(echo "$DIFF_REVISION" | cut -d " " -f 1)
         local REV_B=$(echo "$DIFF_REVISION" | cut -d " " -f 2)
@@ -52,9 +51,9 @@ diffe () {
         return
     fi
 
-    local REVS=$(_git_diffe_get_rev "$MODE")
+    local REVS=$(_git_diffe_get_rev)
 
-    if [[ "$REVS" == "$_DIFFE_GET_REV_ERROR_DID_NOT_CHOOSE_MULTIPLE" ]]
+    if [ "$REVS" == "$_DIFFE_GET_REV_ERROR_DID_NOT_CHOOSE_MULTIPLE" ]
     then
         echo "Try again and use TAB to select multiple items."
 
@@ -131,7 +130,6 @@ _git_verify_repo () {
 }
 
 _git_diffe_get_rev() {
-    local ARG_MODE="$1"
     local REVS
 
     if ! printf "%s" "$REVS" | _contains ","
@@ -148,7 +146,7 @@ _git_get_files_changed_from_two_revisions() {
     ARG_REV_A="$1"
     ARG_REV_B="$2"
 
-    git diff $ARG_REV_A...$ARG_REV_B --name-status
+    git diff "${ARG_REV_A}"..."${ARG_REV_B}" --name-status
 }
 
 _git_get_files_changed_wip () {
